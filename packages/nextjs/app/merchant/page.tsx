@@ -1,6 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { formatUnits } from "viem";
+import { mainnet } from "viem/chains";
+import { useAccount, useReadContract } from "wagmi";
+
+const ZCHF_ADDRESS = "0xB58E61C3098d85632Df34EecfB899A1Ed80921cB" as const;
+
+const ZCHF_ABI = [
+  {
+    name: "balanceOf",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+] as const;
 
 type View = "home" | "qr" | "transfer" | "senden";
 
@@ -53,6 +68,24 @@ const QrPlaceholder = () => (
 const MerchantPage = () => {
   const [view, setView] = useState<View>("home");
   const [selectedAmount, setSelectedAmount] = useState<string>("15.50");
+
+  const { address, isConnected } = useAccount();
+
+  const { data: rawBalance, isLoading } = useReadContract({
+    address: ZCHF_ADDRESS,
+    abi: ZCHF_ABI,
+    functionName: "balanceOf",
+    args: [address!],
+    chainId: mainnet.id,
+    query: { enabled: !!address },
+  });
+
+  const zchfBalance = rawBalance
+    ? parseFloat(formatUnits(rawBalance, 18)).toLocaleString("de-CH", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    : "0.00";
 
   if (view === "qr") {
     return (
@@ -145,11 +178,26 @@ const MerchantPage = () => {
       {/* Balance Card */}
       <div className="card bg-base-100 shadow-xl mb-8">
         <div className="card-body">
-          <p className="text-base-content/60 text-sm">Gesamtguthaben</p>
-          <p className="text-5xl font-bold mt-1">1&#39;847.50</p>
-          <div className="mt-2">
-            <span className="badge badge-primary">ZCHF · Frankencoin</span>
-          </div>
+          {!isConnected ? (
+            <div className="alert alert-warning">
+              <span>Bitte verbinde deine Wallet um dein Guthaben zu sehen.</span>
+            </div>
+          ) : isLoading ? (
+            <div className="flex justify-center py-4">
+              <span className="loading loading-spinner loading-lg" />
+            </div>
+          ) : (
+            <>
+              <p className="text-base-content/60 text-sm">Gesamtguthaben</p>
+              <p className="text-5xl font-bold mt-1">{zchfBalance}</p>
+              <div className="mt-2 flex items-center gap-3">
+                <span className="badge badge-primary">ZCHF · Frankencoin</span>
+                <span className="text-base-content/50 text-xs font-mono">
+                  {address?.slice(0, 6)}...{address?.slice(-4)}
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -159,7 +207,11 @@ const MerchantPage = () => {
       <div className="card bg-base-100 shadow">
         <div className="card-body flex-row justify-between items-center py-4">
           <span className="font-semibold">Privatkonto</span>
-          <span className="font-bold">847.50 ZCHF</span>
+          {isLoading ? (
+            <span className="loading loading-spinner loading-xs" />
+          ) : (
+            <span className="font-bold">{isConnected ? zchfBalance : "0.00"} ZCHF</span>
+          )}
         </div>
       </div>
 
