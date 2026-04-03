@@ -1,5 +1,7 @@
 .PHONY: build deploy generate-abis get-address account chain compile flatten fork format lint test verify
 
+-include .env
+
 DEPLOY_SCRIPT ?= script/Deploy.s.sol
 
 # setup wallet for anvil
@@ -9,7 +11,7 @@ setup-anvil-wallet:
 
 # Start local chain
 chain: setup-anvil-wallet
-	anvil
+	anvil --fork-url https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY} --fork-block-number 24801094
 
 # Start a fork
 fork: setup-anvil-wallet
