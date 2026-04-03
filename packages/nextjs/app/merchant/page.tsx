@@ -118,7 +118,11 @@ const MerchantPage = () => {
         <div className="card bg-base-100 shadow">
           <div className="card-body flex-row justify-between items-center">
             <span className="font-semibold">Privatkonto</span>
-            <span className="font-bold">847.50 ZCHF</span>
+            {isLoading ? (
+              <span className="loading loading-spinner loading-xs" />
+            ) : (
+              <span className="font-bold">{zchfBalance} ZCHF</span>
+            )}
           </div>
         </div>
 
