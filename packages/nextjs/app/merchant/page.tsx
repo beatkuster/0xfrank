@@ -193,13 +193,10 @@ const MerchantPage = () => {
           ) : (
             <>
               <p className="text-base-content/60 text-sm">Gesamtguthaben</p>
-              <p className="text-5xl font-bold mt-1">{zchfBalance}</p>
-              <div className="mt-2 flex items-center gap-3">
-                <span className="badge badge-primary">ZCHF · Frankencoin</span>
-                <span className="text-base-content/50 text-xs font-mono">
-                  {address?.slice(0, 6)}...{address?.slice(-4)}
-                </span>
-              </div>
+              <p className="text-5xl font-bold mt-1">{zchfBalance} ZCHF</p>
+              <span className="text-base-content/50 text-xs font-mono mt-2">
+                {address?.slice(0, 6)}...{address?.slice(-4)}
+              </span>
             </>
           )}
         </div>
