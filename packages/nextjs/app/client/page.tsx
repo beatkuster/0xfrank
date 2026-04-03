@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { formatUnits } from "viem";
+import { formatUnits, isAddress, parseUnits } from "viem";
 import { mainnet } from "viem/chains";
-import { useAccount, useReadContract } from "wagmi";
+import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 
 type View = "home" | "transfer" | "zahlen" | "senden";
 
@@ -17,10 +17,23 @@ const ZCHF_ABI = [
     inputs: [{ name: "account", type: "address" }],
     outputs: [{ name: "", type: "uint256" }],
   },
+  {
+    name: "transfer",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+  },
 ] as const;
 
 const ClientPage = () => {
   const [view, setView] = useState<View>("home");
+  const [recipientAddress, setRecipientAddress] = useState<string>("");
+  const [sendAmount, setSendAmount] = useState<string>("");
+  const [sendError, setSendError] = useState<string>("");
 
   const { address, isConnected } = useAccount();
 
@@ -39,6 +52,35 @@ const ClientPage = () => {
         maximumFractionDigits: 2,
       })
     : "0.00";
+
+  const { writeContract, data: txHash, isPending: isSending } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash: txHash,
+  });
+
+  const handleSend = () => {
+    setSendError("");
+
+    if (!isAddress(recipientAddress)) {
+      setSendError("Ungültige Ethereum-Adresse.");
+      return;
+    }
+
+    const parsed = parseFloat(sendAmount);
+    if (isNaN(parsed) || parsed <= 0) {
+      setSendError("Bitte einen gültigen Betrag eingeben.");
+      return;
+    }
+
+    writeContract({
+      address: ZCHF_ADDRESS,
+      abi: ZCHF_ABI,
+      functionName: "transfer",
+      args: [recipientAddress as `0x${string}`, parseUnits(sendAmount, 18)],
+      chainId: mainnet.id,
+    });
+  };
 
   if (view === "transfer") {
     return (
@@ -98,27 +140,85 @@ const ClientPage = () => {
   if (view === "senden") {
     return (
       <div className="container mx-auto px-6 py-10 max-w-2xl">
-        <button className="btn btn-ghost mb-4" onClick={() => setView("home")}>
+        <button
+          className="btn btn-ghost mb-4"
+          onClick={() => {
+            setView("home");
+            setRecipientAddress("");
+            setSendAmount("");
+            setSendError("");
+          }}
+        >
           ← Zurück
         </button>
         <h2 className="text-2xl font-bold mb-6">Senden</h2>
 
         <div className="flex flex-col gap-4">
-          <div>
-            <label className="label">
-              <span className="label-text">Empfänger-Adresse (0x...)</span>
-            </label>
-            <input type="text" className="input input-bordered w-full" placeholder="0x..." />
-          </div>
-          <div>
-            <label className="label">
-              <span className="label-text">Betrag (ZCHF)</span>
-            </label>
-            <input type="number" className="input input-bordered w-full" placeholder="0.00" />
-          </div>
-        </div>
+          <input
+            type="text"
+            placeholder="Empfänger-Adresse (0x...)"
+            className="input input-bordered w-full font-mono text-sm"
+            value={recipientAddress}
+            onChange={e => setRecipientAddress(e.target.value)}
+          />
 
-        <button className="btn btn-primary w-full mt-6">Senden</button>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              placeholder="0.00"
+              className="input input-bordered w-full text-xl font-bold"
+              value={sendAmount}
+              onChange={e => setSendAmount(e.target.value)}
+              min="0"
+              step="0.01"
+            />
+            <span className="font-mono font-bold text-sm whitespace-nowrap">ZCHF</span>
+          </div>
+
+          {sendError && <div className="alert alert-error text-sm">{sendError}</div>}
+
+          {isSending && (
+            <div className="alert alert-info text-sm">
+              <span className="loading loading-spinner loading-xs" />
+              Transaktion wird signiert...
+            </div>
+          )}
+
+          {isConfirming && (
+            <div className="alert alert-info text-sm">
+              <span className="loading loading-spinner loading-xs" />
+              Transaktion wird bestätigt...
+            </div>
+          )}
+
+          {isConfirmed && txHash && (
+            <div className="alert alert-success text-sm">
+              <div>
+                <p className="font-semibold">Transaktion erfolgreich!</p>
+                <a
+                  href={`https://etherscan.io/tx/${txHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="link font-mono text-xs break-all"
+                >
+                  {txHash}
+                </a>
+              </div>
+            </div>
+          )}
+
+          <button
+            className="btn btn-primary w-full"
+            onClick={handleSend}
+            disabled={isSending || isConfirming || !isConnected}
+          >
+            {isSending || isConfirming ? <span className="loading loading-spinner loading-sm" /> : "Senden"}
+          </button>
+
+          {!isConnected && (
+            <p className="text-sm text-center opacity-60">Bitte verbinde deine Wallet um ZCHF zu senden.</p>
+          )}
+        </div>
       </div>
     );
   }
