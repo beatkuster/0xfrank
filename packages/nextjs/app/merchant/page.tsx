@@ -19,7 +19,7 @@ const ZCHF_ABI = [
 
 type View = "home" | "qr" | "transfer" | "senden";
 
-const PRESETS = ["5.—", "10.—", "15.50", "20.—", "50.—"];
+const PRESETS = ["5", "10", "15.50", "20", "50"];
 
 const QrPlaceholder = () => (
   <svg viewBox="0 0 100 100" width="160" height="160" xmlns="http://www.w3.org/2000/svg">
@@ -170,7 +170,7 @@ const MerchantPage = () => {
           </div>
         </div>
 
-        <button className="btn btn-primary w-full mt-6">Senden →</button>
+        <button className="btn btn-primary w-full mt-6">Senden</button>
       </div>
     );
   }

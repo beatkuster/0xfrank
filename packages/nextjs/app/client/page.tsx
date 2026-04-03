@@ -118,7 +118,7 @@ const ClientPage = () => {
           </div>
         </div>
 
-        <button className="btn btn-primary w-full mt-6">Senden →</button>
+        <button className="btn btn-primary w-full mt-6">Senden</button>
       </div>
     );
   }
