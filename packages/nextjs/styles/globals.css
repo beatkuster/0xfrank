@@ -86,29 +86,29 @@
 }
 
 /* Typography */
-.font-mono { font-family: 'Space Mono', monospace; }
+.font-mono { font-family: 'Space Mono', monospace !important; }
 
 /* Body */
 body {
-  background-color: var(--oxf-bg);
-  color: var(--oxf-text);
+  background-color: var(--oxf-bg) !important;
+  color: var(--oxf-text) !important;
 }
 
 /* Cards */
 .card {
-  background-color: var(--oxf-card);
-  border: 0.5px solid var(--oxf-border);
+  background-color: var(--oxf-card) !important;
+  border: 0.5px solid var(--oxf-border) !important;
 }
 
 /* Inputs */
 .input, .textarea, .select {
-  background-color: var(--oxf-surface);
-  border-color: var(--oxf-border);
-  color: var(--oxf-text);
+  background-color: var(--oxf-surface) !important;
+  border-color: var(--oxf-border) !important;
+  color: var(--oxf-text) !important;
 }
 .input:focus, .textarea:focus, .select:focus {
-  border-color: rgba(200, 241, 53, 0.5);
-  outline: none;
+  border-color: rgba(200, 241, 53, 0.5) !important;
+  outline: none !important;
 }
 
 /* Buttons */
@@ -121,48 +121,47 @@ body {
 }
 
 .btn-primary {
-  background-color: var(--oxf-accent);
-  color: var(--oxf-bg);
-  border: none;
+  background-color: var(--oxf-accent) !important;
+  color: var(--oxf-bg) !important;
+  border: none !important;
 }
 .btn-primary:hover {
-  background-color: #d4f545;
+  background-color: #d4f545 !important;
 }
-
 
 .btn-secondary {
-  background-color: var(--oxf-accent);
-  color: var(--oxf-bg);
-  border: none;
+  background-color: var(--oxf-accent) !important;
+  color: var(--oxf-bg) !important;
+  border: none !important;
 }
 .btn-secondary:hover {
-  background-color: #d4f545;
+  background-color: #d4f545 !important;
 }
 
 .btn-outline {
-  background-color: var(--oxf-accent);
-  color: var(--oxf-bg);
-  border: none;
+  background-color: var(--oxf-accent) !important;
+  color: var(--oxf-bg) !important;
+  border: none !important;
 }
 .btn-outline:hover,
 .btn-outline.btn-active {
-  background-color: #d4f545;
-  color: var(--oxf-bg);
+  background-color: #d4f545 !important;
+  color: var(--oxf-bg) !important;
 }
 
 .btn-accent {
-  background-color: var(--oxf-accent);
-  color: var(--oxf-bg);
-  border: none;
+  background-color: var(--oxf-accent) !important;
+  color: var(--oxf-bg) !important;
+  border: none !important;
 }
 .btn-accent:hover {
-  background-color: #d4f545;
+  background-color: #d4f545 !important;
 }
 
 /* Navbar */
 .navbar {
-  background-color: var(--oxf-surface);
-  border-bottom: 0.5px solid var(--oxf-border);
+  background-color: var(--oxf-surface) !important;
+  border-bottom: 0.5px solid var(--oxf-border) !important;
 }
 
 /* Section labels — monospace uppercase muted */
@@ -190,8 +189,8 @@ body {
 
 /* Pills / badges */
 .pill-accent {
-  background: rgba(200, 241, 53, 0.12);
-  color: var(--oxf-accent);
+  background: rgba(200, 241, 53, 0.12) !important;
+  color: var(--oxf-accent) !important;
   font-family: 'Space Mono', monospace;
   font-size: 10px;
   font-weight: 700;
@@ -199,8 +198,8 @@ body {
   border-radius: 20px;
 }
 .pill-success {
-  background: rgba(46, 204, 113, 0.15);
-  color: #2ecc71;
+  background: rgba(46, 204, 113, 0.15) !important;
+  color: #2ecc71 !important;
   font-family: 'Space Mono', monospace;
   font-size: 10px;
   font-weight: 700;
@@ -210,15 +209,15 @@ body {
 
 /* Route background variants */
 .bg-client {
-  background-color: #0a0b12;
+  background-color: #0a0b12 !important;
 }
 .bg-merchant {
-  background-color: #0c0a0f;
+  background-color: #0c0a0f !important;
 }
 
 /* Join group — remove inner borders (ZCHF suffix) */
 .join .join-item:not(:first-child) {
-  border-color: transparent;
+  border-color: transparent !important;
 }
 
 .link {

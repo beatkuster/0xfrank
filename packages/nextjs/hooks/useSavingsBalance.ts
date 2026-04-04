@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { formatUnits } from "viem";
 
 const SAVINGS_MODULE = "0x27d9ad987bde08a0d083ef7e0e4043c857a17b38";
@@ -15,6 +15,9 @@ type SavingsApiResponse = {
 export const useSavingsBalance = (address: string | undefined) => {
   const [savingsRaw, setSavingsRaw] = useState<bigint>(0n);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const refetch = useCallback(() => setRefreshKey(k => k + 1), []);
 
   useEffect(() => {
     if (!address) {
@@ -37,12 +40,12 @@ export const useSavingsBalance = (address: string | undefined) => {
     };
 
     fetchBalance();
-  }, [address]);
+  }, [address, refreshKey]);
 
   const savingsBalance = parseFloat(formatUnits(savingsRaw, 18)).toLocaleString("de-CH", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
-  return { savingsBalance, savingsRaw, isLoading };
+  return { savingsBalance, savingsRaw, isLoading, refetch };
 };

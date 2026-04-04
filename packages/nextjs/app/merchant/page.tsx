@@ -68,7 +68,12 @@ const MerchantPage = () => {
   const [sendError, setSendError] = useState<string>("");
 
   const { address, isConnected } = useAccount();
-  const { savingsBalance, savingsRaw, isLoading: isLoadingSavings } = useSavingsBalance(address);
+  const {
+    savingsBalance,
+    savingsRaw,
+    isLoading: isLoadingSavings,
+    refetch: refetchSavings,
+  } = useSavingsBalance(address);
 
   const {
     data: rawBalance,
@@ -236,6 +241,10 @@ const MerchantPage = () => {
     return (
       <TransferView
         onBack={() => setView("home")}
+        onSuccess={() => {
+          refetchBalance();
+          refetchSavings();
+        }}
         zchfBalance={zchfBalance}
         isLoading={isLoading}
         savingsBalance={savingsBalance}
