@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { QrCodeScanner } from "~~/components/QrCodeScanner";
 
 type View = "home" | "transfer" | "zahlen" | "senden";
 
@@ -51,9 +52,13 @@ const ClientPage = () => {
         </button>
         <h2 className="text-2xl font-bold mb-6">Zahlen via QR-Code</h2>
 
-        <div className="border-2 border-dashed rounded-xl p-8 text-center text-base-content/50">
-          QR-Code Scanner — coming soon
-        </div>
+        <QrCodeScanner
+          onScan={data => {
+            // TODO next increment: call Frankencoin contract with data.address and data.amount
+            console.log("Payment data:", data);
+            setView("home");
+          }}
+        />
       </div>
     );
   }
