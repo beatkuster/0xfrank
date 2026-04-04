@@ -7,6 +7,7 @@ import { formatUnits, isAddress, parseUnits } from "viem";
 import { mainnet } from "viem/chains";
 import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { QrCodeScanner } from "~~/components/QrCodeScanner";
+import { useSavingsBalance } from "~~/hooks/useSavingsBalance";
 
 type View = "home" | "transfer" | "zahlen" | "senden";
 
@@ -40,6 +41,7 @@ const ClientPage = () => {
   const [sendError, setSendError] = useState<string>("");
 
   const { address, isConnected } = useAccount();
+  const { savingsBalance, savingsRaw, isLoading: isLoadingSavings } = useSavingsBalance(address);
 
   const { data: rawBalance, isLoading } = useReadContract({
     address: ZCHF_ADDRESS,
@@ -56,6 +58,11 @@ const ClientPage = () => {
         maximumFractionDigits: 2,
       })
     : "0.00";
+
+  const totalBalance = parseFloat(formatUnits((rawBalance ?? 0n) + savingsRaw, 18)).toLocaleString("de-CH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
   const { writeContract, data: txHash, isPending: isSending } = useWriteContract();
 
@@ -87,7 +94,15 @@ const ClientPage = () => {
   };
 
   if (view === "transfer") {
-    return <TransferView onBack={() => setView("home")} zchfBalance={zchfBalance} isLoading={isLoading} />;
+    return (
+      <TransferView
+        onBack={() => setView("home")}
+        zchfBalance={zchfBalance}
+        isLoading={isLoading}
+        savingsBalance={savingsBalance}
+        isLoadingSavings={isLoadingSavings}
+      />
+    );
   }
 
   if (view === "zahlen") {
@@ -217,7 +232,7 @@ const ClientPage = () => {
           ) : (
             <>
               <p className="text-base-content/60 text-sm">Gesamtguthaben</p>
-              <p className="text-5xl font-bold mt-1">{zchfBalance} ZCHF</p>
+              <p className="text-5xl font-bold mt-1">{totalBalance} ZCHF</p>
               <span className="text-base-content/50 text-xs font-mono mt-2">
                 {address?.slice(0, 6)}...{address?.slice(-4)}
               </span>
@@ -252,7 +267,11 @@ const ClientPage = () => {
             <span className="font-semibold">Sparkonto</span>
             <span className="badge badge-success badge-sm">3.2% APY</span>
           </div>
-          <span className="font-bold">1&#39;000.00 ZCHF</span>
+          {isLoadingSavings ? (
+            <span className="loading loading-spinner loading-xs" />
+          ) : (
+            <span className="font-bold">{savingsBalance} ZCHF</span>
+          )}
         </div>
       </div>
 

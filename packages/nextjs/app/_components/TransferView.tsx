@@ -46,9 +46,11 @@ type TransferViewProps = {
   onBack: () => void;
   zchfBalance: string;
   isLoading: boolean;
+  savingsBalance: string;
+  isLoadingSavings: boolean;
 };
 
-const TransferView = ({ onBack, zchfBalance, isLoading }: TransferViewProps) => {
+const TransferView = ({ onBack, zchfBalance, isLoading, savingsBalance, isLoadingSavings }: TransferViewProps) => {
   const [amount, setAmount] = useState("");
   const [error, setError] = useState("");
 
@@ -120,7 +122,11 @@ const TransferView = ({ onBack, zchfBalance, isLoading }: TransferViewProps) => 
       <div className="card bg-base-100 shadow">
         <div className="card-body flex-row justify-between items-center">
           <span className="font-semibold">Sparkonto</span>
-          <span className="font-bold">1&#39;000.00 ZCHF</span>
+          {isLoadingSavings ? (
+            <span className="loading loading-spinner loading-xs" />
+          ) : (
+            <span className="font-bold">{savingsBalance} ZCHF</span>
+          )}
         </div>
       </div>
 
