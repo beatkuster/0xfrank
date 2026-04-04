@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -85,11 +84,9 @@
   background: var(--oxf-bg);
 }
 
-/* Typography */
-.font-mono { font-family: 'Space Mono', monospace !important; }
-
 /* Body */
 body {
+  font-family: var(--font-space-mono), 'Space Mono', monospace;
   background-color: var(--oxf-bg) !important;
   color: var(--oxf-text) !important;
 }
@@ -166,7 +163,7 @@ body {
 
 /* Section labels — monospace uppercase muted */
 .section-label {
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-space-mono), 'Space Mono', monospace;
   font-size: 10px;
   color: var(--oxf-muted);
   text-transform: uppercase;
@@ -191,7 +188,7 @@ body {
 .pill-accent {
   background: rgba(200, 241, 53, 0.12) !important;
   color: var(--oxf-accent) !important;
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-space-mono), 'Space Mono', monospace;
   font-size: 10px;
   font-weight: 700;
   padding: 2px 8px;
@@ -200,7 +197,7 @@ body {
 .pill-success {
   background: rgba(46, 204, 113, 0.15) !important;
   color: #2ecc71 !important;
-  font-family: 'Space Mono', monospace;
+  font-family: var(--font-space-mono), 'Space Mono', monospace;
   font-size: 10px;
   font-weight: 700;
   padding: 2px 8px;
