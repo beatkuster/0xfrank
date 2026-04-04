@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { parseUnits } from "viem";
 import { mainnet } from "viem/chains";
-import { useAccount, useConfig, useReadContract, useWriteContract } from "wagmi";
-import { waitForTransactionReceipt } from "wagmi/actions";
+import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import { useTransactor } from "~~/hooks/scaffold-eth";
 
 const SAVINGS_ADDRESS = "0x27d9ad987bde08a0d083ef7e0e4043c857a17b38" as const;
 const ZCHF_ADDRESS = "0xB58E61C3098d85632Df34EecfB899A1Ed80921cB" as const;
@@ -60,19 +60,27 @@ const SAVINGS_ABI = [
 
 type TransferViewProps = {
   onBack: () => void;
+  onSuccess: () => void;
   zchfBalance: string;
   isLoading: boolean;
   savingsBalance: string;
   isLoadingSavings: boolean;
 };
 
-const TransferView = ({ onBack, zchfBalance, isLoading, savingsBalance, isLoadingSavings }: TransferViewProps) => {
+const TransferView = ({
+  onBack,
+  onSuccess,
+  zchfBalance,
+  isLoading,
+  savingsBalance,
+  isLoadingSavings,
+}: TransferViewProps) => {
   const [amount, setAmount] = useState("");
   const [error, setError] = useState("");
   const [isPrivatkontoOnTop, setIsPrivatkontoOnTop] = useState(true);
 
   const { address } = useAccount();
-  const config = useConfig();
+  const transactor = useTransactor();
 
   const { data: allowance } = useReadContract({
     address: ZCHF_ADDRESS,
@@ -96,33 +104,56 @@ const TransferView = ({ onBack, zchfBalance, isLoading, savingsBalance, isLoadin
 
     const parsedAmount = parseUnits(amount, 18);
 
-    if (isPrivatkontoOnTop) {
-      if (allowance !== undefined && allowance < parsedAmount) {
-        const approveHash = await writeContractAsync({
-          address: ZCHF_ADDRESS,
-          abi: ZCHF_ABI,
-          functionName: "approve",
-          args: [SAVINGS_ADDRESS, parsedAmount],
-          chainId: mainnet.id,
-        });
-        await waitForTransactionReceipt(config, { hash: approveHash });
-      }
+    try {
+      if (isPrivatkontoOnTop) {
+        if (allowance !== undefined && allowance < parsedAmount) {
+          await transactor(() =>
+            writeContractAsync({
+              address: ZCHF_ADDRESS,
+              abi: ZCHF_ABI,
+              functionName: "approve",
+              args: [SAVINGS_ADDRESS, parsedAmount],
+              chainId: mainnet.id,
+            }),
+          );
+        }
 
-      await writeContractAsync({
-        address: SAVINGS_ADDRESS,
-        abi: SAVINGS_ABI,
-        functionName: "save",
-        args: [parsedAmount, REFERRAL_ADDRESS, REFERRAL_FEE_PPM],
-        chainId: mainnet.id,
-      });
-    } else {
-      await writeContractAsync({
-        address: SAVINGS_ADDRESS,
-        abi: SAVINGS_ABI,
-        functionName: "withdraw",
-        args: [address!, parsedAmount],
-        chainId: mainnet.id,
-      });
+        await transactor(
+          () =>
+            writeContractAsync({
+              address: SAVINGS_ADDRESS,
+              abi: SAVINGS_ABI,
+              functionName: "save",
+              args: [parsedAmount, REFERRAL_ADDRESS, REFERRAL_FEE_PPM],
+              chainId: mainnet.id,
+            }),
+          {
+            onBlockConfirmation: () => {
+              onSuccess();
+              onBack();
+            },
+          },
+        );
+      } else {
+        await transactor(
+          () =>
+            writeContractAsync({
+              address: SAVINGS_ADDRESS,
+              abi: SAVINGS_ABI,
+              functionName: "withdraw",
+              args: [address!, parsedAmount],
+              chainId: mainnet.id,
+            }),
+          {
+            onBlockConfirmation: () => {
+              onSuccess();
+              onBack();
+            },
+          },
+        );
+      }
+    } catch {
+      // errors are already handled by useTransactor notifications
     }
   };
 
