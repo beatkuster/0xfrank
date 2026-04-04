@@ -32,12 +32,19 @@ const ZCHF_ABI = [
   },
 ] as const;
 
+const REFERRAL_ADDRESS = "0x526273396a746e74038AbCD11357e5a145f30020" as const;
+const REFERRAL_FEE_PPM = 250000 as const;
+
 const SAVINGS_ABI = [
   {
     name: "save",
     type: "function",
     stateMutability: "nonpayable",
-    inputs: [{ name: "amount", type: "uint192" }],
+    inputs: [
+      { name: "amount", type: "uint192" },
+      { name: "referrer", type: "address" },
+      { name: "referralFeePPM", type: "uint24" },
+    ],
     outputs: [],
   },
 ] as const;
@@ -94,7 +101,7 @@ const TransferView = ({ onBack, zchfBalance, isLoading, savingsBalance, isLoadin
       address: SAVINGS_ADDRESS,
       abi: SAVINGS_ABI,
       functionName: "save",
-      args: [parsedAmount],
+      args: [parsedAmount, REFERRAL_ADDRESS, REFERRAL_FEE_PPM],
       chainId: mainnet.id,
     });
   };
