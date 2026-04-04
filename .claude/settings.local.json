@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.etherscan.io)",
+      "WebFetch(domain:etherscan.io)",
+      "Bash(curl -s https://raw.githubusercontent.com/Frankencoin-ZCHF/Frankencoin/main/contracts/savings/AbstractSavings.sol)",
+      "Bash(curl -s https://raw.githubusercontent.com/Frankencoin-ZCHF/Frankencoin/main/contracts/savings/Savings.sol)"
+    ]
+  }
+}

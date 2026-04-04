@@ -1,45 +1,148 @@
+"use client";
+
+import { useState } from "react";
+import { parseUnits } from "viem";
+import { mainnet } from "viem/chains";
+import { useAccount, useConfig, useReadContract, useWriteContract } from "wagmi";
+import { waitForTransactionReceipt } from "wagmi/actions";
+
+const SAVINGS_ADDRESS = "0x27d9ad987bde08a0d083ef7e0e4043c857a17b38" as const;
+const ZCHF_ADDRESS = "0xB58E61C3098d85632Df34EecfB899A1Ed80921cB" as const;
+
+const ZCHF_ABI = [
+  {
+    name: "approve",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "spender", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    name: "allowance",
+    type: "function",
+    stateMutability: "view",
+    inputs: [
+      { name: "owner", type: "address" },
+      { name: "spender", type: "address" },
+    ],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+] as const;
+
+const SAVINGS_ABI = [
+  {
+    name: "save",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "amount", type: "uint192" }],
+    outputs: [],
+  },
+] as const;
+
 type TransferViewProps = {
   onBack: () => void;
   zchfBalance: string;
   isLoading: boolean;
 };
 
-const TransferView = ({ onBack, zchfBalance, isLoading }: TransferViewProps) => (
-  <div className="container mx-auto px-6 py-10 max-w-2xl">
-    <button className="btn btn-ghost mb-4" onClick={onBack}>
-      ← Zurück
-    </button>
-    <h2 className="text-2xl font-bold mb-6">Transfer</h2>
+const TransferView = ({ onBack, zchfBalance, isLoading }: TransferViewProps) => {
+  const [amount, setAmount] = useState("");
+  const [error, setError] = useState("");
 
-    <div className="card bg-base-100 shadow">
-      <div className="card-body flex-row justify-between items-center">
-        <span className="font-semibold">Privatkonto</span>
-        {isLoading ? (
-          <span className="loading loading-spinner loading-xs" />
-        ) : (
-          <span className="font-bold">{zchfBalance} ZCHF</span>
-        )}
+  const { address } = useAccount();
+  const config = useConfig();
+
+  const { data: allowance } = useReadContract({
+    address: ZCHF_ADDRESS,
+    abi: ZCHF_ABI,
+    functionName: "allowance",
+    args: [address!, SAVINGS_ADDRESS],
+    chainId: mainnet.id,
+    query: { enabled: !!address },
+  });
+
+  const { writeContractAsync, isPending } = useWriteContract();
+
+  const handleTransfer = async () => {
+    setError("");
+
+    const parsed = parseFloat(amount);
+    if (isNaN(parsed) || parsed <= 0) {
+      setError("Bitte gültigen Betrag eingeben.");
+      return;
+    }
+
+    const parsedAmount = parseUnits(amount, 18);
+
+    if (allowance !== undefined && allowance < parsedAmount) {
+      const approveHash = await writeContractAsync({
+        address: ZCHF_ADDRESS,
+        abi: ZCHF_ABI,
+        functionName: "approve",
+        args: [SAVINGS_ADDRESS, parsedAmount],
+        chainId: mainnet.id,
+      });
+      await waitForTransactionReceipt(config, { hash: approveHash });
+    }
+
+    await writeContractAsync({
+      address: SAVINGS_ADDRESS,
+      abi: SAVINGS_ABI,
+      functionName: "save",
+      args: [parsedAmount],
+      chainId: mainnet.id,
+    });
+  };
+
+  return (
+    <div className="container mx-auto px-6 py-10 max-w-2xl">
+      <button className="btn btn-ghost mb-4" onClick={onBack}>
+        ← Zurück
+      </button>
+      <h2 className="text-2xl font-bold mb-6">Transfer</h2>
+
+      <div className="card bg-base-100 shadow">
+        <div className="card-body flex-row justify-between items-center">
+          <span className="font-semibold">Privatkonto</span>
+          {isLoading ? (
+            <span className="loading loading-spinner loading-xs" />
+          ) : (
+            <span className="font-bold">{zchfBalance} ZCHF</span>
+          )}
+        </div>
       </div>
-    </div>
 
-    <div className="flex justify-center my-4 text-2xl">⇅</div>
+      <div className="flex justify-center my-4 text-2xl">⇅</div>
 
-    <div className="card bg-base-100 shadow">
-      <div className="card-body flex-row justify-between items-center">
-        <span className="font-semibold">Sparkonto</span>
-        <span className="font-bold">1&#39;000.00 ZCHF</span>
+      <div className="card bg-base-100 shadow">
+        <div className="card-body flex-row justify-between items-center">
+          <span className="font-semibold">Sparkonto</span>
+          <span className="font-bold">1&#39;000.00 ZCHF</span>
+        </div>
       </div>
-    </div>
 
-    <div className="mt-6">
-      <label className="label">
-        <span className="label-text">Betrag (ZCHF)</span>
-      </label>
-      <input type="text" className="input input-bordered w-full" placeholder="0.00" />
-    </div>
+      <div className="mt-6">
+        <label className="label">
+          <span className="label-text">Betrag (ZCHF)</span>
+        </label>
+        <input
+          type="text"
+          className="input input-bordered w-full"
+          placeholder="0.00"
+          value={amount}
+          onChange={e => setAmount(e.target.value)}
+        />
+        {error && <p className="text-error text-sm mt-2">{error}</p>}
+      </div>
 
-    <button className="btn btn-primary w-full mt-4">Transfer ausführen</button>
-  </div>
-);
+      <button className="btn btn-primary w-full mt-4" onClick={handleTransfer} disabled={isPending}>
+        {isPending ? <span className="loading loading-spinner loading-sm" /> : "Transfer ausführen"}
+      </button>
+    </div>
+  );
+};
 
 export default TransferView;
