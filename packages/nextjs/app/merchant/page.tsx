@@ -3,6 +3,7 @@
 import { useState } from "react";
 import SendenView from "../_components/SendenView";
 import TransferView from "../_components/TransferView";
+import { QRCodeSVG } from "qrcode.react";
 import { formatUnits, isAddress, parseUnits } from "viem";
 import { mainnet } from "viem/chains";
 import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
@@ -33,49 +34,12 @@ type View = "home" | "qr" | "transfer" | "senden";
 
 const PRESETS = ["5", "10", "15.50", "20", "50"];
 
-const QrPlaceholder = () => (
-  <svg viewBox="0 0 100 100" width="160" height="160" xmlns="http://www.w3.org/2000/svg">
-    <rect width="100" height="100" fill="white" />
-    {/* Top-left corner */}
-    <rect x="5" y="5" width="30" height="30" rx="3" fill="#000" />
-    <rect x="9" y="9" width="22" height="22" rx="2" fill="white" />
-    <rect x="13" y="13" width="14" height="14" rx="1" fill="#000" />
-    {/* Top-right corner */}
-    <rect x="65" y="5" width="30" height="30" rx="3" fill="#000" />
-    <rect x="69" y="9" width="22" height="22" rx="2" fill="white" />
-    <rect x="73" y="13" width="14" height="14" rx="1" fill="#000" />
-    {/* Bottom-left corner */}
-    <rect x="5" y="65" width="30" height="30" rx="3" fill="#000" />
-    <rect x="9" y="69" width="22" height="22" rx="2" fill="white" />
-    <rect x="13" y="73" width="14" height="14" rx="1" fill="#000" />
-    {/* Scattered data dots */}
-    <rect x="42" y="5" width="5" height="5" fill="#000" />
-    <rect x="50" y="5" width="5" height="5" fill="#000" />
-    <rect x="42" y="12" width="5" height="5" fill="#000" />
-    <rect x="57" y="12" width="5" height="5" fill="#000" />
-    <rect x="5" y="42" width="5" height="5" fill="#000" />
-    <rect x="5" y="50" width="5" height="5" fill="#000" />
-    <rect x="12" y="57" width="5" height="5" fill="#000" />
-    <rect x="42" y="42" width="5" height="5" fill="#000" />
-    <rect x="50" y="42" width="5" height="5" fill="#000" />
-    <rect x="57" y="50" width="5" height="5" fill="#000" />
-    <rect x="42" y="57" width="5" height="5" fill="#000" />
-    <rect x="65" y="42" width="5" height="5" fill="#000" />
-    <rect x="72" y="50" width="5" height="5" fill="#000" />
-    <rect x="65" y="57" width="5" height="5" fill="#000" />
-    <rect x="80" y="42" width="5" height="5" fill="#000" />
-    <rect x="42" y="65" width="5" height="5" fill="#000" />
-    <rect x="50" y="72" width="5" height="5" fill="#000" />
-    <rect x="57" y="65" width="5" height="5" fill="#000" />
-    <rect x="42" y="80" width="5" height="5" fill="#000" />
-    <rect x="57" y="80" width="5" height="5" fill="#000" />
-    <rect x="72" y="65" width="5" height="5" fill="#000" />
-    <rect x="80" y="72" width="5" height="5" fill="#000" />
-    <rect x="87" y="65" width="5" height="5" fill="#000" />
-    {/* Center dot */}
-    <rect x="46" y="46" width="8" height="8" rx="2" fill="#000" />
-  </svg>
-);
+const MERCHANT_ADDRESS = "0xC4ac634fdA42bCbB030F7fA7Eb7ddd42eEf3A9AB";
+
+// Converts preset display strings like "5.—" or "15.50" to plain decimal strings
+function presetToAmount(preset: string): string {
+  return preset.replace(".—", "");
+}
 
 const MerchantPage = () => {
   const [view, setView] = useState<View>("home");
@@ -140,13 +104,15 @@ const MerchantPage = () => {
         <h2 className="text-2xl font-bold mb-6">QR-Code · {selectedAmount} ZCHF</h2>
 
         <div className="flex justify-center mb-6">
-          <div className="bg-white w-48 h-48 flex items-center justify-center rounded-lg shadow">
-            <QrPlaceholder />
+          <div className="bg-white p-4 rounded-lg shadow">
+            <QRCodeSVG value={`frankencoin:${MERCHANT_ADDRESS}?amount=${presetToAmount(selectedAmount)}`} size={192} />
           </div>
         </div>
 
         <p className="text-center text-base-content/50 mb-2">⏳ Warte auf Zahlung...</p>
-        <p className="text-center font-mono text-sm">0x4d2e...f881</p>
+        <p className="text-center font-mono text-sm">
+          {MERCHANT_ADDRESS.slice(0, 6)}...{MERCHANT_ADDRESS.slice(-4)}
+        </p>
       </div>
     );
   }
