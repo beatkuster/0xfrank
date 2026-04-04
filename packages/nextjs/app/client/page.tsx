@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SendenView from "../_components/SendenView";
 import TransferView from "../_components/TransferView";
 import { formatUnits, isAddress, parseUnits } from "viem";
@@ -8,6 +8,7 @@ import { mainnet } from "viem/chains";
 import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { QrCodeScanner } from "~~/components/QrCodeScanner";
 import { useSavingsBalance } from "~~/hooks/useSavingsBalance";
+import { notification } from "~~/utils/scaffold-eth/notification";
 
 type View = "home" | "transfer" | "zahlen" | "senden";
 
@@ -69,6 +70,12 @@ const ClientPage = () => {
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash: txHash,
   });
+
+  useEffect(() => {
+    if (isConfirmed) {
+      notification.success("Zahlung erfolgreich!", { duration: 5000 });
+    }
+  }, [isConfirmed]);
 
   const handleSend = () => {
     setSendError("");

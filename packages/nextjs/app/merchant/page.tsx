@@ -1,13 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import SendenView from "../_components/SendenView";
 import TransferView from "../_components/TransferView";
 import { QRCodeSVG } from "qrcode.react";
 import { formatUnits, isAddress, parseUnits } from "viem";
 import { mainnet } from "viem/chains";
-import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import {
+  useAccount,
+  useReadContract,
+  useWaitForTransactionReceipt,
+  useWatchContractEvent,
+  useWriteContract,
+} from "wagmi";
 import { useSavingsBalance } from "~~/hooks/useSavingsBalance";
+import { notification } from "~~/utils/scaffold-eth/notification";
 
 const ZCHF_ADDRESS = "0xB58E61C3098d85632Df34EecfB899A1Ed80921cB" as const;
 
@@ -29,7 +36,19 @@ const ZCHF_ABI = [
     ],
     outputs: [{ name: "", type: "bool" }],
   },
+  {
+    name: "Transfer",
+    type: "event",
+    inputs: [
+      { name: "from", type: "address", indexed: true },
+      { name: "to", type: "address", indexed: true },
+      { name: "value", type: "uint256", indexed: false },
+    ],
+  },
 ] as const;
+
+// Tolerance: 0.01 ZCHF in wei — absorbs any rounding at 2 decimal places
+const AMOUNT_TOLERANCE = parseUnits("0.01", 18);
 
 type View = "home" | "qr" | "transfer" | "senden";
 
@@ -51,7 +70,11 @@ const MerchantPage = () => {
   const { address, isConnected } = useAccount();
   const { savingsBalance, savingsRaw, isLoading: isLoadingSavings } = useSavingsBalance(address);
 
-  const { data: rawBalance, isLoading } = useReadContract({
+  const {
+    data: rawBalance,
+    isLoading,
+    refetch: refetchBalance,
+  } = useReadContract({
     address: ZCHF_ADDRESS,
     abi: ZCHF_ABI,
     functionName: "balanceOf",
@@ -76,6 +99,36 @@ const MerchantPage = () => {
 
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash: txHash,
+  });
+
+  // Ref keeps the callback fresh — avoids stale closure inside useWatchContractEvent
+  const paymentRef = useRef({ address, selectedAmount, view });
+  paymentRef.current = { address, selectedAmount, view };
+
+  useWatchContractEvent({
+    address: ZCHF_ADDRESS,
+    abi: ZCHF_ABI,
+    eventName: "Transfer",
+    chainId: mainnet.id,
+    enabled: view === "qr" && !!address,
+    onLogs: logs => {
+      const { address: merchantAddress, selectedAmount: amount } = paymentRef.current;
+      if (!merchantAddress) return;
+      const expected = parseUnits(amount, 18);
+      for (const log of logs) {
+        if (log.args.to?.toLowerCase() !== merchantAddress.toLowerCase()) continue;
+        const received = log.args.value ?? 0n;
+        const diff = received > expected ? received - expected : expected - received;
+        if (diff <= AMOUNT_TOLERANCE) {
+          notification.success(`Zahlung erhalten: ${amount} ZCHF`, { duration: 4000 });
+          setTimeout(() => {
+            refetchBalance();
+            setView("home");
+          }, 4000);
+          return;
+        }
+      }
+    },
   });
 
   const handleSend = () => {
