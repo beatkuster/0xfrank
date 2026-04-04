@@ -32,12 +32,19 @@ const ZCHF_ABI = [
   },
 ] as const;
 
+const REFERRAL_ADDRESS = "0x526273396a746e74038AbCD11357e5a145f30020" as const;
+const REFERRAL_FEE_PPM = 250000 as const;
+
 const SAVINGS_ABI = [
   {
     name: "save",
     type: "function",
     stateMutability: "nonpayable",
-    inputs: [{ name: "amount", type: "uint192" }],
+    inputs: [
+      { name: "amount", type: "uint192" },
+      { name: "referrer", type: "address" },
+      { name: "referralFeePPM", type: "uint24" },
+    ],
     outputs: [],
   },
 ] as const;
@@ -46,9 +53,11 @@ type TransferViewProps = {
   onBack: () => void;
   zchfBalance: string;
   isLoading: boolean;
+  savingsBalance: string;
+  isLoadingSavings: boolean;
 };
 
-const TransferView = ({ onBack, zchfBalance, isLoading }: TransferViewProps) => {
+const TransferView = ({ onBack, zchfBalance, isLoading, savingsBalance, isLoadingSavings }: TransferViewProps) => {
   const [amount, setAmount] = useState("");
   const [error, setError] = useState("");
 
@@ -92,7 +101,7 @@ const TransferView = ({ onBack, zchfBalance, isLoading }: TransferViewProps) => 
       address: SAVINGS_ADDRESS,
       abi: SAVINGS_ABI,
       functionName: "save",
-      args: [parsedAmount],
+      args: [parsedAmount, REFERRAL_ADDRESS, REFERRAL_FEE_PPM],
       chainId: mainnet.id,
     });
   };
@@ -120,7 +129,11 @@ const TransferView = ({ onBack, zchfBalance, isLoading }: TransferViewProps) => 
       <div className="card bg-base-100 shadow">
         <div className="card-body flex-row justify-between items-center">
           <span className="font-semibold">Sparkonto</span>
-          <span className="font-bold">1&#39;000.00 ZCHF</span>
+          {isLoadingSavings ? (
+            <span className="loading loading-spinner loading-xs" />
+          ) : (
+            <span className="font-bold">{savingsBalance} ZCHF</span>
+          )}
         </div>
       </div>
 

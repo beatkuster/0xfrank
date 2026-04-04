@@ -7,6 +7,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { formatUnits, isAddress, parseUnits } from "viem";
 import { mainnet } from "viem/chains";
 import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { useSavingsBalance } from "~~/hooks/useSavingsBalance";
 
 const ZCHF_ADDRESS = "0xB58E61C3098d85632Df34EecfB899A1Ed80921cB" as const;
 
@@ -48,6 +49,7 @@ const MerchantPage = () => {
   const [sendError, setSendError] = useState<string>("");
 
   const { address, isConnected } = useAccount();
+  const { savingsBalance, savingsRaw, isLoading: isLoadingSavings } = useSavingsBalance(address);
 
   const { data: rawBalance, isLoading } = useReadContract({
     address: ZCHF_ADDRESS,
@@ -64,6 +66,11 @@ const MerchantPage = () => {
         maximumFractionDigits: 2,
       })
     : "0.00";
+
+  const totalBalance = parseFloat(formatUnits((rawBalance ?? 0n) + savingsRaw, 18)).toLocaleString("de-CH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
   const { writeContract, data: txHash, isPending: isSending } = useWriteContract();
 
@@ -173,7 +180,15 @@ const MerchantPage = () => {
   }
 
   if (view === "transfer") {
-    return <TransferView onBack={() => setView("home")} zchfBalance={zchfBalance} isLoading={isLoading} />;
+    return (
+      <TransferView
+        onBack={() => setView("home")}
+        zchfBalance={zchfBalance}
+        isLoading={isLoading}
+        savingsBalance={savingsBalance}
+        isLoadingSavings={isLoadingSavings}
+      />
+    );
   }
 
   if (view === "senden") {
@@ -218,7 +233,7 @@ const MerchantPage = () => {
           ) : (
             <>
               <p className="text-base-content/60 text-sm">Gesamtguthaben</p>
-              <p className="text-5xl font-bold mt-1">{zchfBalance} ZCHF</p>
+              <p className="text-5xl font-bold mt-1">{totalBalance} ZCHF</p>
               <span className="text-base-content/50 text-xs font-mono mt-2">
                 {address?.slice(0, 6)}...{address?.slice(-4)}
               </span>
@@ -253,7 +268,11 @@ const MerchantPage = () => {
             <span className="font-semibold">Sparkonto</span>
             <span className="badge badge-success badge-sm">3.2% APY</span>
           </div>
-          <span className="font-bold">1&#39;000.00 ZCHF</span>
+          {isLoadingSavings ? (
+            <span className="loading loading-spinner loading-xs" />
+          ) : (
+            <span className="font-bold">{savingsBalance} ZCHF</span>
+          )}
         </div>
       </div>
 
