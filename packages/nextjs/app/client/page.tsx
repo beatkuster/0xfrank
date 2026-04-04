@@ -41,9 +41,18 @@ const ClientPage = () => {
   const [sendError, setSendError] = useState<string>("");
 
   const { address, isConnected } = useAccount();
-  const { savingsBalance, savingsRaw, isLoading: isLoadingSavings } = useSavingsBalance(address);
+  const {
+    savingsBalance,
+    savingsRaw,
+    isLoading: isLoadingSavings,
+    refetch: refetchSavings,
+  } = useSavingsBalance(address);
 
-  const { data: rawBalance, isLoading } = useReadContract({
+  const {
+    data: rawBalance,
+    isLoading,
+    refetch: refetchBalance,
+  } = useReadContract({
     address: ZCHF_ADDRESS,
     abi: ZCHF_ABI,
     functionName: "balanceOf",
@@ -97,6 +106,10 @@ const ClientPage = () => {
     return (
       <TransferView
         onBack={() => setView("home")}
+        onSuccess={() => {
+          refetchBalance();
+          refetchSavings();
+        }}
         zchfBalance={zchfBalance}
         isLoading={isLoading}
         savingsBalance={savingsBalance}
