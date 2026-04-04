@@ -244,7 +244,7 @@ const ClientPage = () => {
       {/* Accounts Section */}
       <h2 className="text-xs font-semibold tracking-widest text-base-content/50 mb-3">MEINE KONTEN</h2>
 
-      <div className="card bg-base-100 shadow">
+      <div className="card bg-base-100 shadow mb-4">
         <div className="card-body flex-row justify-between items-center py-4">
           <span className="font-semibold">Privatkonto</span>
           {isLoading ? (
@@ -255,17 +255,11 @@ const ClientPage = () => {
         </div>
       </div>
 
-      <div className="flex justify-center my-3">
-        <button className="btn btn-sm btn-outline" onClick={() => setView("transfer")}>
-          ⇅ Transfer
-        </button>
-      </div>
-
       <div className="card bg-base-100 shadow mb-8">
         <div className="card-body flex-row justify-between items-center py-4">
           <div className="flex items-center gap-2">
             <span className="font-semibold">Sparkonto</span>
-            <span className="badge badge-success badge-sm">3.2% APY</span>
+            <span className="pill-accent">3.2% APY</span>
           </div>
           {isLoadingSavings ? (
             <span className="loading loading-spinner loading-xs" />
