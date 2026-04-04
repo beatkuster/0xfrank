@@ -34,9 +34,7 @@ type View = "home" | "qr" | "transfer" | "senden";
 
 const PRESETS = ["0.1", "0.2", "0.5", "1"];
 
-const MERCHANT_ADDRESS = "0xC4ac634fdA42bCbB030F7fA7Eb7ddd42eEf3A9AB";
-
-// Converts preset display strings like "5.—" or "15.50" to plain decimal strings
+// Converts preset display strings like "0.1" or "0.5" to plain decimal strings
 function presetToAmount(preset: string): string {
   return preset.replace(".—", "");
 }
@@ -103,16 +101,24 @@ const MerchantPage = () => {
         </button>
         <h2 className="text-2xl font-bold mb-6">QR-Code · {selectedAmount} ZCHF</h2>
 
-        <div className="flex justify-center mb-6">
-          <div className="bg-white p-4 rounded-lg shadow">
-            <QRCodeSVG value={`frankencoin:${MERCHANT_ADDRESS}?amount=${presetToAmount(selectedAmount)}`} size={192} />
+        {!isConnected || !address ? (
+          <div role="alert" className="alert alert-warning">
+            <span>Bitte verbinde deine Wallet um einen QR-Code zu generieren.</span>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="flex justify-center mb-6">
+              <div className="bg-white p-4 rounded-lg shadow">
+                <QRCodeSVG value={`frankencoin:${address}?amount=${presetToAmount(selectedAmount)}`} size={192} />
+              </div>
+            </div>
 
-        <p className="text-center text-base-content/50 mb-2">⏳ Warte auf Zahlung...</p>
-        <p className="text-center font-mono text-sm">
-          {MERCHANT_ADDRESS.slice(0, 6)}...{MERCHANT_ADDRESS.slice(-4)}
-        </p>
+            <p className="text-center text-base-content/50 mb-2">⏳ Warte auf Zahlung...</p>
+            <p className="text-center font-mono text-sm">
+              {address.slice(0, 6)}...{address.slice(-4)}
+            </p>
+          </>
+        )}
       </div>
     );
   }
