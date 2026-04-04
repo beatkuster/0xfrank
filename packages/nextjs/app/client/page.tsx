@@ -34,6 +34,7 @@ const ZCHF_ABI = [
 
 const ClientPage = () => {
   const [view, setView] = useState<View>("home");
+  const [pendingPayment, setPendingPayment] = useState<{ address: string; amount: string } | null>(null);
   const [recipientAddress, setRecipientAddress] = useState<string>("");
   const [sendAmount, setSendAmount] = useState<string>("");
   const [sendError, setSendError] = useState<string>("");
@@ -97,13 +98,79 @@ const ClientPage = () => {
         </button>
         <h2 className="text-2xl font-bold mb-6">Zahlen via QR-Code</h2>
 
-        <QrCodeScanner
-          onScan={data => {
-            // TODO next increment: call Frankencoin contract with data.address and data.amount
-            console.log("Payment data:", data);
-            setView("home");
-          }}
-        />
+        {!pendingPayment && (
+          <QrCodeScanner
+            onScan={data => {
+              console.log("Payment data:", data);
+              setPendingPayment(data);
+            }}
+          />
+        )}
+
+        {/* Payment confirmation modal */}
+        <div className={`modal ${pendingPayment ? "modal-open" : ""}`}>
+          <div className="modal-box">
+            <h3 className="font-bold text-xl mb-6">Zahlung bestätigen</h3>
+
+            <div className="flex flex-col gap-3 mb-8">
+              <div className="flex justify-between items-center">
+                <span className="text-base-content/60">Betrag</span>
+                <span className="font-bold text-lg">{pendingPayment?.amount} ZCHF</span>
+              </div>
+              <div className="divider my-0" />
+              <div className="flex justify-between items-center">
+                <span className="text-base-content/60">Empfänger</span>
+                <span className="font-mono text-sm">
+                  {pendingPayment?.address.slice(0, 6)}...{pendingPayment?.address.slice(-4)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-base-content/60">Von</span>
+                <span className="font-mono text-sm">
+                  {address?.slice(0, 6)}...{address?.slice(-4)}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                className="btn btn-ghost flex-1"
+                onClick={() => {
+                  setPendingPayment(null);
+                  setView("home");
+                }}
+              >
+                Abbrechen
+              </button>
+              <button
+                className="btn btn-primary flex-1"
+                onClick={() => {
+                  if (!pendingPayment) return;
+                  writeContract({
+                    address: ZCHF_ADDRESS,
+                    abi: ZCHF_ABI,
+                    functionName: "transfer",
+                    args: [pendingPayment.address as `0x${string}`, parseUnits(pendingPayment.amount, 18)],
+                    chainId: mainnet.id,
+                  });
+                  setPendingPayment(null);
+                  setView("home");
+                }}
+              >
+                Zahlen
+              </button>
+            </div>
+          </div>
+          <div
+            className="modal-backdrop"
+            onClick={() => {
+              setPendingPayment(null);
+              setView("home");
+            }}
+          >
+            <button>close</button>
+          </div>
+        </div>
       </div>
     );
   }

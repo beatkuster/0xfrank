@@ -32,7 +32,7 @@ const ZCHF_ABI = [
 
 type View = "home" | "qr" | "transfer" | "senden";
 
-const PRESETS = ["5", "10", "15.50", "20", "50"];
+const PRESETS = ["0.1", "0.2", "0.5", "1"];
 
 const MERCHANT_ADDRESS = "0xC4ac634fdA42bCbB030F7fA7Eb7ddd42eEf3A9AB";
 
@@ -43,7 +43,7 @@ function presetToAmount(preset: string): string {
 
 const MerchantPage = () => {
   const [view, setView] = useState<View>("home");
-  const [selectedAmount, setSelectedAmount] = useState<string>("15.50");
+  const [selectedAmount, setSelectedAmount] = useState<string>("0.5");
   const [recipientAddress, setRecipientAddress] = useState<string>("");
   const [sendAmount, setSendAmount] = useState<string>("");
   const [sendError, setSendError] = useState<string>("");
