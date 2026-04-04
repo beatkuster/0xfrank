@@ -42,6 +42,7 @@ function presetToAmount(preset: string): string {
 const MerchantPage = () => {
   const [view, setView] = useState<View>("home");
   const [selectedAmount, setSelectedAmount] = useState<string>("0.5");
+  const [customInput, setCustomInput] = useState<string>("");
   const [recipientAddress, setRecipientAddress] = useState<string>("");
   const [sendAmount, setSendAmount] = useState<string>("");
   const [sendError, setSendError] = useState<string>("");
@@ -91,6 +92,54 @@ const MerchantPage = () => {
       args: [recipientAddress as `0x${string}`, parseUnits(sendAmount, 18)],
       chainId: mainnet.id,
     });
+  };
+
+  const handleCustomInput = (raw: string) => {
+    const normalized = raw.replace(",", ".").replace(/[^0-9.]/g, "");
+    const [integer, ...decimals] = normalized.split(".");
+    let cleaned = decimals.length ? `${integer}.${decimals.join("")}` : integer;
+    if (cleaned.includes(".")) {
+      const [intPart, decPart] = cleaned.split(".");
+      cleaned = `${intPart}.${decPart.slice(0, 2)}`;
+    }
+    setCustomInput(cleaned);
+    const num = parseFloat(cleaned);
+    if (!isNaN(num) && num > 0) setSelectedAmount(cleaned);
+  };
+
+  const handleAmountKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const passthrough = [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      ".",
+      ",",
+      "Backspace",
+      "Delete",
+      "ArrowLeft",
+      "ArrowRight",
+      "Tab",
+      "Enter",
+    ];
+    if (!passthrough.includes(e.key)) {
+      e.preventDefault();
+      return;
+    }
+    if (/^[0-9]$/.test(e.key)) {
+      const input = e.currentTarget;
+      const selStart = input.selectionStart ?? input.value.length;
+      const selEnd = input.selectionEnd ?? input.value.length;
+      const newValue = input.value.slice(0, selStart) + e.key + input.value.slice(selEnd);
+      const dotIndex = newValue.indexOf(".");
+      if (dotIndex !== -1 && newValue.length - dotIndex - 1 > 2) e.preventDefault();
+    }
   };
 
   if (view === "qr") {
@@ -215,12 +264,30 @@ const MerchantPage = () => {
         {PRESETS.map(preset => (
           <button
             key={preset}
-            className={`btn btn-sm btn-outline ${selectedAmount === preset ? "btn-active" : ""}`}
-            onClick={() => setSelectedAmount(preset)}
+            className={`btn btn-sm btn-outline ${selectedAmount === preset && !customInput ? "btn-active" : ""}`}
+            onClick={() => {
+              setSelectedAmount(preset);
+              setCustomInput("");
+            }}
           >
             {preset}
           </button>
         ))}
+      </div>
+
+      <div className="join w-full mb-4">
+        <input
+          type="text"
+          inputMode="decimal"
+          className="input input-bordered join-item flex-1"
+          placeholder="oder Betrag eingeben..."
+          value={customInput}
+          onChange={e => handleCustomInput(e.target.value)}
+          onKeyDown={handleAmountKeyDown}
+        />
+        <span className="join-item flex items-center px-4 bg-base-200 border border-base-300 rounded-r-lg text-sm font-semibold">
+          ZCHF
+        </span>
       </div>
 
       <p className="text-3xl font-bold mb-4">{selectedAmount} ZCHF</p>
